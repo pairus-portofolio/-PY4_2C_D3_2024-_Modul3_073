@@ -17,6 +17,8 @@ class _LogViewState extends State<LogView> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
 
   @override
   void initState() {
@@ -47,6 +49,7 @@ class _LogViewState extends State<LogView> {
       },
     );
   }
+
   void _showEditLogDialog(int index, LogModel log) {
     _titleController.text = log.title;
     _descController.text = log.description;
@@ -98,6 +101,7 @@ class _LogViewState extends State<LogView> {
       ),
     );
   }
+
   void _showAddLogDialog() {
     showDialog(
       context: context,
@@ -154,6 +158,13 @@ class _LogViewState extends State<LogView> {
         title: Text("LogBook: ${widget.username}"),
         actions: [
           IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // Focus to search field
+              FocusScope.of(context).requestFocus(FocusNode());
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
               Navigator.pushAndRemoveUntil(
@@ -165,47 +176,95 @@ class _LogViewState extends State<LogView> {
           ),
         ],
       ),
-      body: ValueListenableBuilder<List<LogModel>>(
-        valueListenable: _controller.logsNotifier,
-        builder: (context, logs, child) {
-          if (logs.isEmpty) {
-            return const Center(
-              child: Text("Belum ada catatan.", style: TextStyle(fontSize: 16)),
-            );
-          }
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: "Cari catatan...",
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: ValueListenableBuilder<List<LogModel>>(
+              valueListenable: _controller.logsNotifier,
+              builder: (context, logs, child) {
+                final filteredLogs = logs.where((log) {
+                  return log.title.toLowerCase().contains(_searchQuery) ||
+                      log.description.toLowerCase().contains(_searchQuery);
+                }).toList();
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: logs.length,
-            itemBuilder: (context, index) {
-              final log = logs[index];
+                if (filteredLogs.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "Belum ada catatan.",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  );
+                }
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: const Icon(Icons.note, color: Colors.blue),
-                  title: Text(log.title),
-                  subtitle: Text(log.description),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showEditLogDialog(index, log),
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredLogs.length,
+                  itemBuilder: (context, index) {
+                    final log = filteredLogs[index];
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        leading: const Icon(Icons.note, color: Colors.blue),
+                        title: Text(log.title),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(log.description),
+                            const SizedBox(height: 6),
+                            Text(
+                              log.date,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () {
+                                // Find original index in logs
+                                final originalIndex = logs.indexOf(log);
+                                _showEditLogDialog(originalIndex, log);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                final originalIndex = logs.indexOf(log);
+                                _controller.removeLog(originalIndex);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          _controller.removeLog(index);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddLogDialog,
