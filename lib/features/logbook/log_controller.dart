@@ -11,24 +11,31 @@ class LogController {
     loadFromDisk();
   }
 
-  void addLog(String title, String desc) {
+  void addLog(String title, String desc, {String category = 'Pribadi'}) {
     final newLog = LogModel(
       title: title,
       description: desc,
       date: DateTime.now().toString(),
+      category: category,
     );
 
     logsNotifier.value = [...logsNotifier.value, newLog];
     saveToDisk();
   }
 
-  void updateLog(int index, String title, String desc) {
+  void updateLog(
+    int index,
+    String title,
+    String desc, {
+    String category = 'Pribadi',
+  }) {
     final currentLogs = List<LogModel>.from(logsNotifier.value);
 
     currentLogs[index] = LogModel(
       title: title,
       description: desc,
       date: DateTime.now().toString(),
+      category: category,
     );
 
     logsNotifier.value = currentLogs;

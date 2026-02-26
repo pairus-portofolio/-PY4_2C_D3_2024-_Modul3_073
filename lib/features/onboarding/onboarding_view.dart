@@ -144,7 +144,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                           height: 8,
                           decoration: BoxDecoration(
                             color: isActive
-                                ? const Color(0xFF4A90D9)
+                                ? Theme.of(context).colorScheme.primary
                                 : Colors.grey.shade300,
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -196,8 +196,6 @@ class _OnboardingViewState extends State<OnboardingView> {
                       child: ElevatedButton(
                         onPressed: _nextStep,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4A90D9),
-                          foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
